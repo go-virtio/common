@@ -212,18 +212,21 @@ func TestPCICapsByType(t *testing.T) {
 
 func TestPCIDeviceIDHelpers(t *testing.T) {
 	cases := []struct {
-		did              uint16
-		isNet            bool
-		isBlock          bool
+		did                uint16
+		isNet              bool
+		isBlock            bool
+		isEntropy          bool
 		isModern, isLegacy bool
 	}{
-		{0x1000, true, false, false, true},   // legacy net
-		{0x1001, false, true, false, true},   // legacy block
-		{0x1040, false, false, true, false},  // modern type=0
-		{0x1041, true, false, true, false},   // modern net
-		{0x1042, false, true, true, false},   // modern block
-		{0x107F, false, false, true, false},  // top of modern
-		{0x1080, false, false, false, false}, // outside both
+		{0x1000, true, false, false, false, true},   // legacy net
+		{0x1001, false, true, false, false, true},   // legacy block
+		{0x1005, false, false, true, false, true},   // legacy entropy
+		{0x1040, false, false, false, true, false},  // modern type=0
+		{0x1041, true, false, false, true, false},   // modern net
+		{0x1042, false, true, false, true, false},   // modern block
+		{0x1044, false, false, true, true, false},   // modern entropy
+		{0x107F, false, false, false, true, false},  // top of modern
+		{0x1080, false, false, false, false, false}, // outside both
 	}
 	for _, c := range cases {
 		if got := PCIDeviceIDIsNet(c.did); got != c.isNet {
@@ -231,6 +234,9 @@ func TestPCIDeviceIDHelpers(t *testing.T) {
 		}
 		if got := PCIDeviceIDIsBlock(c.did); got != c.isBlock {
 			t.Errorf("PCIDeviceIDIsBlock(0x%04x) = %v, want %v", c.did, got, c.isBlock)
+		}
+		if got := PCIDeviceIDIsEntropy(c.did); got != c.isEntropy {
+			t.Errorf("PCIDeviceIDIsEntropy(0x%04x) = %v, want %v", c.did, got, c.isEntropy)
 		}
 		if got := PCIDeviceIDIsModern(c.did); got != c.isModern {
 			t.Errorf("PCIDeviceIDIsModern(0x%04x) = %v, want %v", c.did, got, c.isModern)
@@ -298,5 +304,13 @@ func TestDeviceTypes(t *testing.T) {
 	}
 	if DeviceTypeConsole != 3 {
 		t.Errorf("DeviceTypeConsole = %d, want 3", DeviceTypeConsole)
+	}
+	if DeviceTypeEntropy != 4 {
+		t.Errorf("DeviceTypeEntropy = %d, want 4", DeviceTypeEntropy)
+	}
+	// Modern DID = 0x1040 + device_type (Virtio 1.1 §4.1.2.1).
+	if PCIDeviceIDModernEntropy != PCIDeviceIDModernMin+DeviceTypeEntropy {
+		t.Errorf("PCIDeviceIDModernEntropy = 0x%04x, want 0x%04x",
+			PCIDeviceIDModernEntropy, PCIDeviceIDModernMin+DeviceTypeEntropy)
 	}
 }

@@ -42,14 +42,17 @@ const (
 	DeviceTypeNet     uint16 = 1
 	DeviceTypeBlock   uint16 = 2
 	DeviceTypeConsole uint16 = 3
+	DeviceTypeEntropy uint16 = 4
 )
 
-// Convenience constants for the two most common device-class IDs.
+// Convenience constants for the common device-class IDs.
 const (
-	PCIDeviceIDLegacyNet   uint16 = 0x1000
-	PCIDeviceIDModernNet   uint16 = 0x1041
-	PCIDeviceIDLegacyBlock uint16 = 0x1001
-	PCIDeviceIDModernBlock uint16 = 0x1042
+	PCIDeviceIDLegacyNet     uint16 = 0x1000
+	PCIDeviceIDModernNet     uint16 = 0x1041
+	PCIDeviceIDLegacyBlock   uint16 = 0x1001
+	PCIDeviceIDModernBlock   uint16 = 0x1042
+	PCIDeviceIDLegacyEntropy uint16 = 0x1005
+	PCIDeviceIDModernEntropy uint16 = 0x1044
 )
 
 // PCIDeviceIDIsModern reports whether a DeviceID is in the modern
@@ -78,6 +81,12 @@ func PCIDeviceIDIsNet(deviceID uint16) bool {
 // device.
 func PCIDeviceIDIsBlock(deviceID uint16) bool {
 	return deviceID == PCIDeviceIDLegacyBlock || deviceID == PCIDeviceIDModernBlock
+}
+
+// PCIDeviceIDIsEntropy reports whether a DeviceID identifies a
+// virtio-rng (virtio-entropy) device (legacy 0x1005 OR modern 0x1044).
+func PCIDeviceIDIsEntropy(deviceID uint16) bool {
+	return deviceID == PCIDeviceIDLegacyEntropy || deviceID == PCIDeviceIDModernEntropy
 }
 
 // PCICapIDVendorSpecific = 0x09 (PCI Local Bus Specification 3.0
