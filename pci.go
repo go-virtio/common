@@ -43,6 +43,7 @@ const (
 	DeviceTypeBlock   uint16 = 2
 	DeviceTypeConsole uint16 = 3
 	DeviceTypeEntropy uint16 = 4
+	DeviceTypeVsock   uint16 = 19
 )
 
 // Convenience constants for the common device-class IDs.
@@ -53,6 +54,9 @@ const (
 	PCIDeviceIDModernBlock   uint16 = 0x1042
 	PCIDeviceIDLegacyEntropy uint16 = 0x1005
 	PCIDeviceIDModernEntropy uint16 = 0x1044
+	// virtio-vsock postdates the legacy transport, so it has only a
+	// modern device ID (0x1040 + DeviceTypeVsock).
+	PCIDeviceIDModernVsock uint16 = 0x1053
 )
 
 // PCIDeviceIDIsModern reports whether a DeviceID is in the modern
@@ -87,6 +91,12 @@ func PCIDeviceIDIsBlock(deviceID uint16) bool {
 // virtio-rng (virtio-entropy) device (legacy 0x1005 OR modern 0x1044).
 func PCIDeviceIDIsEntropy(deviceID uint16) bool {
 	return deviceID == PCIDeviceIDLegacyEntropy || deviceID == PCIDeviceIDModernEntropy
+}
+
+// PCIDeviceIDIsVsock reports whether a DeviceID identifies a
+// virtio-vsock device (modern 0x1053; there is no legacy variant).
+func PCIDeviceIDIsVsock(deviceID uint16) bool {
+	return deviceID == PCIDeviceIDModernVsock
 }
 
 // PCICapIDVendorSpecific = 0x09 (PCI Local Bus Specification 3.0
