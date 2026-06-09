@@ -404,6 +404,67 @@ func (q *Virtqueue) AddBuffer(addr uintptr, phys uint64, length uint32, writable
 	return 0, ErrQueueFull
 }
 
+// ChainBuffer describes one descriptor in a multi-descriptor request
+// chain (Virtio 1.1 §2.6.5). Writable drives VIRTQ_DESC_F_WRITE
+// (true = device-write-only). Devices such as virtio-blk require a
+// chain — e.g. a read-only request header, a data buffer, and a
+// device-writable status byte — rather than the single-descriptor
+// buffers AddBuffer posts.
+type ChainBuffer struct {
+	Addr     uintptr // host-virtual address (driver bookkeeping only)
+	Phys     uint64  // physical address the device sees
+	Len      uint32  // buffer length in bytes
+	Writable bool    // device-write-only (VIRTQ_DESC_F_WRITE)
+}
+
+// AddChain allocates len(bufs) free descriptors, links them via
+// VIRTQ_DESC_F_NEXT in order, publishes the head descriptor in the
+// available ring, and returns the head index. The whole chain is freed
+// in one call via ReclaimChain(head).
+//
+// Errors: ErrEmptyChain (len==0), ErrChainTooLong (more descriptors
+// than the ring holds), ErrQueueFull (not enough free slots right now).
+func (q *Virtqueue) AddChain(bufs []ChainBuffer) (uint16, error) {
+	if len(bufs) == 0 {
+		return 0, ErrEmptyChain
+	}
+	if len(bufs) > int(q.Layout.Size) {
+		return 0, ErrChainTooLong
+	}
+	// Collect exactly len(bufs) currently-free descriptor slots.
+	slots := make([]uint16, 0, len(bufs))
+	for i := uint16(0); i < q.Layout.Size && len(slots) < len(bufs); i++ {
+		if !q.Buffers[i].InUse {
+			slots = append(slots, i)
+		}
+	}
+	if len(slots) < len(bufs) {
+		return 0, ErrQueueFull
+	}
+	for n, b := range bufs {
+		flags := uint16(0)
+		if b.Writable {
+			flags |= VirtqDescFWrite
+		}
+		next := uint16(0)
+		if n < len(bufs)-1 {
+			flags |= VirtqDescFNext
+			next = slots[n+1]
+		}
+		// slots[n] < Size by construction, so writeDescriptor cannot fail.
+		_ = q.writeDescriptor(slots[n], b.Phys, b.Len, flags, next)
+		q.Buffers[slots[n]] = VirtqueueBuffer{
+			Addr:  b.Addr,
+			Phys:  b.Phys,
+			Len:   b.Len,
+			InUse: true,
+		}
+	}
+	// slots[0] < Size, so PostAvail cannot fail.
+	_ = q.PostAvail(slots[0])
+	return slots[0], nil
+}
+
 // Reclaim marks descriptor `descIdx` as free (caller has consumed the
 // device's used-ring report and copied the data out). Idempotent.
 func (q *Virtqueue) Reclaim(descIdx uint16) error {
@@ -411,6 +472,26 @@ func (q *Virtqueue) Reclaim(descIdx uint16) error {
 		return ErrInvalidIdx
 	}
 	q.Buffers[descIdx].InUse = false
+	return nil
+}
+
+// ReclaimChain frees a whole descriptor chain starting at `head`,
+// following the VIRTQ_DESC_F_NEXT links written by AddChain. The walk is
+// bounded by the ring size so a corrupted next-link cannot loop forever.
+func (q *Virtqueue) ReclaimChain(head uint16) error {
+	if head >= q.Layout.Size {
+		return ErrInvalidIdx
+	}
+	idx := head
+	for i := 0; i < int(q.Layout.Size); i++ {
+		// idx < Size by the guard above + links pointing at valid slots.
+		_, _, flags, next, _ := q.readDescriptor(idx)
+		q.Buffers[idx].InUse = false
+		if flags&VirtqDescFNext == 0 {
+			break
+		}
+		idx = next
+	}
 	return nil
 }
 
@@ -497,4 +578,6 @@ var (
 	ErrInvalidIdx        = commonError("go-virtio/common: virtqueue: descriptor index out of range")
 	ErrInvalidQueueSize  = commonError("go-virtio/common: virtqueue: queue size must be a non-zero power of two")
 	ErrAllocReturnedZero = commonError("go-virtio/common: virtqueue: PageAllocator returned addr=0 with success")
+	ErrEmptyChain        = commonError("go-virtio/common: virtqueue: AddChain called with no buffers")
+	ErrChainTooLong      = commonError("go-virtio/common: virtqueue: chain has more descriptors than the ring holds")
 )

@@ -385,3 +385,92 @@ func TestVirtqDescFConstants(t *testing.T) {
 		t.Errorf("VirtqDescFIndirect: got 0x%x, want 0x4", VirtqDescFIndirect)
 	}
 }
+
+func TestVirtqueue_AddChainLinksAndReclaims(t *testing.T) {
+	q := newTestVirtqueue(t, 8, 0)
+	// 3-descriptor chain: read-only header, read-only data, writable status.
+	head, err := q.AddChain([]ChainBuffer{
+		{Phys: 0x1000, Len: 16, Writable: false},
+		{Phys: 0x2000, Len: 512, Writable: false},
+		{Phys: 0x3000, Len: 1, Writable: true},
+	})
+	if err != nil {
+		t.Fatalf("AddChain: %v", err)
+	}
+	// Walk the chain via the descriptor links and check flags/next.
+	idx := head
+	var seen int
+	for {
+		addr, length, flags, next, derr := q.readDescriptor(idx)
+		if derr != nil {
+			t.Fatalf("readDescriptor: %v", derr)
+		}
+		switch seen {
+		case 0:
+			if addr != 0x1000 || length != 16 || flags&VirtqDescFNext == 0 || flags&VirtqDescFWrite != 0 {
+				t.Errorf("header desc: addr=0x%x len=%d flags=0x%x", addr, length, flags)
+			}
+		case 2:
+			if addr != 0x3000 || length != 1 || flags&VirtqDescFWrite == 0 || flags&VirtqDescFNext != 0 {
+				t.Errorf("status desc: addr=0x%x len=%d flags=0x%x", addr, length, flags)
+			}
+		}
+		if !q.Buffers[idx].InUse {
+			t.Errorf("desc %d should be InUse", idx)
+		}
+		seen++
+		if flags&VirtqDescFNext == 0 {
+			break
+		}
+		idx = next
+	}
+	if seen != 3 {
+		t.Fatalf("walked %d descriptors, want 3", seen)
+	}
+	// The head must be published in the available ring.
+	if q.AvailIdx() != 1 {
+		t.Errorf("AvailIdx = %d, want 1", q.AvailIdx())
+	}
+	// ReclaimChain frees every descriptor in the chain.
+	if err := q.ReclaimChain(head); err != nil {
+		t.Fatalf("ReclaimChain: %v", err)
+	}
+	for i := uint16(0); i < 3; i++ {
+		if q.Buffers[i].InUse {
+			t.Errorf("desc %d still InUse after ReclaimChain", i)
+		}
+	}
+}
+
+func TestVirtqueue_AddChainEmpty(t *testing.T) {
+	q := newTestVirtqueue(t, 4, 0)
+	if _, err := q.AddChain(nil); err != ErrEmptyChain {
+		t.Errorf("got %v, want ErrEmptyChain", err)
+	}
+}
+
+func TestVirtqueue_AddChainTooLong(t *testing.T) {
+	q := newTestVirtqueue(t, 2, 0)
+	bufs := []ChainBuffer{{Phys: 1}, {Phys: 2}, {Phys: 3}} // 3 > ring size 2
+	if _, err := q.AddChain(bufs); err != ErrChainTooLong {
+		t.Errorf("got %v, want ErrChainTooLong", err)
+	}
+}
+
+func TestVirtqueue_AddChainQueueFull(t *testing.T) {
+	q := newTestVirtqueue(t, 2, 0)
+	// Occupy one of the two slots so a 2-descriptor chain can't fit.
+	if _, err := q.AddBuffer(0, 0x10, 8, false); err != nil {
+		t.Fatalf("AddBuffer: %v", err)
+	}
+	if _, err := q.AddChain([]ChainBuffer{{Phys: 1}, {Phys: 2}}); err != ErrQueueFull {
+		t.Errorf("got %v, want ErrQueueFull", err)
+	}
+}
+
+func TestVirtqueue_ReclaimChainInvalidIdx(t *testing.T) {
+	q := newTestVirtqueue(t, 4, 0)
+	if err := q.ReclaimChain(99); err != ErrInvalidIdx {
+		t.Errorf("got %v, want ErrInvalidIdx", err)
+	}
+}
