@@ -212,23 +212,26 @@ func TestPCICapsByType(t *testing.T) {
 
 func TestPCIDeviceIDHelpers(t *testing.T) {
 	cases := []struct {
-		did                uint16
-		isNet              bool
-		isBlock            bool
-		isEntropy          bool
-		isVsock            bool
-		isModern, isLegacy bool
+		did                                  uint16
+		isNet, isBlock, isEntropy            bool
+		isVsock, isConsole, isBalloon, isGPU bool
+		isModern, isLegacy                   bool
 	}{
-		{0x1000, true, false, false, false, false, true},   // legacy net
-		{0x1001, false, true, false, false, false, true},   // legacy block
-		{0x1005, false, false, true, false, false, true},   // legacy entropy
-		{0x1040, false, false, false, false, true, false},  // modern type=0
-		{0x1041, true, false, false, false, true, false},   // modern net
-		{0x1042, false, true, false, false, true, false},   // modern block
-		{0x1044, false, false, true, false, true, false},   // modern entropy
-		{0x1053, false, false, false, true, true, false},   // modern vsock
-		{0x107F, false, false, false, false, true, false},  // top of modern
-		{0x1080, false, false, false, false, false, false}, // outside both
+		{0x1000, true, false, false, false, false, false, false, false, true},   // legacy net
+		{0x1001, false, true, false, false, false, false, false, false, true},   // legacy block
+		{0x1002, false, false, false, false, false, true, false, false, true},   // legacy balloon
+		{0x1003, false, false, false, false, true, false, false, false, true},   // legacy console
+		{0x1005, false, false, true, false, false, false, false, false, true},   // legacy entropy
+		{0x1040, false, false, false, false, false, false, false, true, false},  // modern type=0
+		{0x1041, true, false, false, false, false, false, false, true, false},   // modern net
+		{0x1042, false, true, false, false, false, false, false, true, false},   // modern block
+		{0x1043, false, false, false, false, true, false, false, true, false},   // modern console
+		{0x1044, false, false, true, false, false, false, false, true, false},   // modern entropy
+		{0x1045, false, false, false, false, false, true, false, true, false},   // modern balloon
+		{0x1050, false, false, false, false, false, false, true, true, false},   // modern gpu
+		{0x1053, false, false, false, true, false, false, false, true, false},   // modern vsock
+		{0x107F, false, false, false, false, false, false, false, true, false},  // top of modern
+		{0x1080, false, false, false, false, false, false, false, false, false}, // outside both
 	}
 	for _, c := range cases {
 		if got := PCIDeviceIDIsNet(c.did); got != c.isNet {
@@ -242,6 +245,15 @@ func TestPCIDeviceIDHelpers(t *testing.T) {
 		}
 		if got := PCIDeviceIDIsVsock(c.did); got != c.isVsock {
 			t.Errorf("PCIDeviceIDIsVsock(0x%04x) = %v, want %v", c.did, got, c.isVsock)
+		}
+		if got := PCIDeviceIDIsConsole(c.did); got != c.isConsole {
+			t.Errorf("PCIDeviceIDIsConsole(0x%04x) = %v, want %v", c.did, got, c.isConsole)
+		}
+		if got := PCIDeviceIDIsBalloon(c.did); got != c.isBalloon {
+			t.Errorf("PCIDeviceIDIsBalloon(0x%04x) = %v, want %v", c.did, got, c.isBalloon)
+		}
+		if got := PCIDeviceIDIsGPU(c.did); got != c.isGPU {
+			t.Errorf("PCIDeviceIDIsGPU(0x%04x) = %v, want %v", c.did, got, c.isGPU)
 		}
 		if got := PCIDeviceIDIsModern(c.did); got != c.isModern {
 			t.Errorf("PCIDeviceIDIsModern(0x%04x) = %v, want %v", c.did, got, c.isModern)
@@ -313,8 +325,26 @@ func TestDeviceTypes(t *testing.T) {
 	if DeviceTypeEntropy != 4 {
 		t.Errorf("DeviceTypeEntropy = %d, want 4", DeviceTypeEntropy)
 	}
+	if DeviceTypeBalloon != 5 {
+		t.Errorf("DeviceTypeBalloon = %d, want 5", DeviceTypeBalloon)
+	}
+	if DeviceTypeGPU != 16 {
+		t.Errorf("DeviceTypeGPU = %d, want 16", DeviceTypeGPU)
+	}
 	if DeviceTypeVsock != 19 {
 		t.Errorf("DeviceTypeVsock = %d, want 19", DeviceTypeVsock)
+	}
+	if PCIDeviceIDModernBalloon != PCIDeviceIDModernMin+DeviceTypeBalloon {
+		t.Errorf("PCIDeviceIDModernBalloon = 0x%04x, want 0x%04x",
+			PCIDeviceIDModernBalloon, PCIDeviceIDModernMin+DeviceTypeBalloon)
+	}
+	if PCIDeviceIDModernGPU != PCIDeviceIDModernMin+DeviceTypeGPU {
+		t.Errorf("PCIDeviceIDModernGPU = 0x%04x, want 0x%04x",
+			PCIDeviceIDModernGPU, PCIDeviceIDModernMin+DeviceTypeGPU)
+	}
+	if PCIDeviceIDModernConsole != PCIDeviceIDModernMin+DeviceTypeConsole {
+		t.Errorf("PCIDeviceIDModernConsole = 0x%04x, want 0x%04x",
+			PCIDeviceIDModernConsole, PCIDeviceIDModernMin+DeviceTypeConsole)
 	}
 	// Modern DID = 0x1040 + device_type (Virtio 1.1 §4.1.2.1).
 	if PCIDeviceIDModernEntropy != PCIDeviceIDModernMin+DeviceTypeEntropy {

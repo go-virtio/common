@@ -43,6 +43,8 @@ const (
 	DeviceTypeBlock   uint16 = 2
 	DeviceTypeConsole uint16 = 3
 	DeviceTypeEntropy uint16 = 4
+	DeviceTypeBalloon uint16 = 5
+	DeviceTypeGPU     uint16 = 16
 	DeviceTypeVsock   uint16 = 19
 )
 
@@ -54,9 +56,16 @@ const (
 	PCIDeviceIDModernBlock   uint16 = 0x1042
 	PCIDeviceIDLegacyEntropy uint16 = 0x1005
 	PCIDeviceIDModernEntropy uint16 = 0x1044
-	// virtio-vsock postdates the legacy transport, so it has only a
-	// modern device ID (0x1040 + DeviceTypeVsock).
+	// virtio-console: legacy/transitional 0x1003, modern 0x1040+3.
+	PCIDeviceIDLegacyConsole uint16 = 0x1003
+	PCIDeviceIDModernConsole uint16 = 0x1043
+	// virtio-balloon: legacy/transitional 0x1002, modern 0x1040+5.
+	PCIDeviceIDLegacyBalloon uint16 = 0x1002
+	PCIDeviceIDModernBalloon uint16 = 0x1045
+	// virtio-vsock and virtio-gpu postdate the legacy transport, so each
+	// has only a modern device ID (0x1040 + device type).
 	PCIDeviceIDModernVsock uint16 = 0x1053
+	PCIDeviceIDModernGPU   uint16 = 0x1050
 )
 
 // PCIDeviceIDIsModern reports whether a DeviceID is in the modern
@@ -75,8 +84,8 @@ func PCIDeviceIDIsLegacy(deviceID uint16) bool {
 
 // PCIDeviceIDIsNet reports whether a DeviceID identifies a virtio-net
 // device (legacy 0x1000 OR modern 0x1041). Other legacy DIDs
-// (0x1001 block, 0x1002 console, …) are not net devices even though
-// they share vendor 0x1AF4.
+// (0x1001 block, 0x1002 balloon, 0x1003 console, …) are not net devices
+// even though they share vendor 0x1AF4.
 func PCIDeviceIDIsNet(deviceID uint16) bool {
 	return deviceID == PCIDeviceIDLegacyNet || deviceID == PCIDeviceIDModernNet
 }
@@ -97,6 +106,24 @@ func PCIDeviceIDIsEntropy(deviceID uint16) bool {
 // virtio-vsock device (modern 0x1053; there is no legacy variant).
 func PCIDeviceIDIsVsock(deviceID uint16) bool {
 	return deviceID == PCIDeviceIDModernVsock
+}
+
+// PCIDeviceIDIsConsole reports whether a DeviceID identifies a
+// virtio-console device (legacy 0x1003 OR modern 0x1043).
+func PCIDeviceIDIsConsole(deviceID uint16) bool {
+	return deviceID == PCIDeviceIDLegacyConsole || deviceID == PCIDeviceIDModernConsole
+}
+
+// PCIDeviceIDIsBalloon reports whether a DeviceID identifies a
+// virtio-balloon device (legacy 0x1002 OR modern 0x1045).
+func PCIDeviceIDIsBalloon(deviceID uint16) bool {
+	return deviceID == PCIDeviceIDLegacyBalloon || deviceID == PCIDeviceIDModernBalloon
+}
+
+// PCIDeviceIDIsGPU reports whether a DeviceID identifies a virtio-gpu
+// device (modern 0x1050; there is no legacy variant).
+func PCIDeviceIDIsGPU(deviceID uint16) bool {
+	return deviceID == PCIDeviceIDModernGPU
 }
 
 // PCICapIDVendorSpecific = 0x09 (PCI Local Bus Specification 3.0
