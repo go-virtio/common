@@ -46,6 +46,7 @@ const (
 	DeviceTypeBalloon uint16 = 5
 	DeviceTypeGPU     uint16 = 16
 	DeviceTypeVsock   uint16 = 19
+	DeviceTypeFS      uint16 = 26
 )
 
 // Convenience constants for the common device-class IDs.
@@ -62,10 +63,11 @@ const (
 	// virtio-balloon: legacy/transitional 0x1002, modern 0x1040+5.
 	PCIDeviceIDLegacyBalloon uint16 = 0x1002
 	PCIDeviceIDModernBalloon uint16 = 0x1045
-	// virtio-vsock and virtio-gpu postdate the legacy transport, so each
-	// has only a modern device ID (0x1040 + device type).
+	// virtio-vsock, virtio-gpu and virtio-fs postdate the legacy transport,
+	// so each has only a modern device ID (0x1040 + device type).
 	PCIDeviceIDModernVsock uint16 = 0x1053
 	PCIDeviceIDModernGPU   uint16 = 0x1050
+	PCIDeviceIDModernFS    uint16 = 0x105A
 )
 
 // PCIDeviceIDIsModern reports whether a DeviceID is in the modern
@@ -106,6 +108,12 @@ func PCIDeviceIDIsEntropy(deviceID uint16) bool {
 // virtio-vsock device (modern 0x1053; there is no legacy variant).
 func PCIDeviceIDIsVsock(deviceID uint16) bool {
 	return deviceID == PCIDeviceIDModernVsock
+}
+
+// PCIDeviceIDIsFS reports whether a DeviceID identifies a virtio-fs
+// device (modern 0x105A; there is no legacy variant).
+func PCIDeviceIDIsFS(deviceID uint16) bool {
+	return deviceID == PCIDeviceIDModernFS
 }
 
 // PCIDeviceIDIsConsole reports whether a DeviceID identifies a

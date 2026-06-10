@@ -355,4 +355,18 @@ func TestDeviceTypes(t *testing.T) {
 		t.Errorf("PCIDeviceIDModernVsock = 0x%04x, want 0x%04x",
 			PCIDeviceIDModernVsock, PCIDeviceIDModernMin+DeviceTypeVsock)
 	}
+	if PCIDeviceIDModernFS != PCIDeviceIDModernMin+DeviceTypeFS {
+		t.Errorf("PCIDeviceIDModernFS = 0x%04x, want 0x%04x",
+			PCIDeviceIDModernFS, PCIDeviceIDModernMin+DeviceTypeFS)
+	}
+}
+
+// TestPCIDeviceIDIsFS covers the virtio-fs device-ID helper (modern-only 0x105A).
+func TestPCIDeviceIDIsFS(t *testing.T) {
+	if !PCIDeviceIDIsFS(PCIDeviceIDModernFS) {
+		t.Errorf("PCIDeviceIDIsFS(0x%04x) = false, want true", PCIDeviceIDModernFS)
+	}
+	if PCIDeviceIDIsFS(PCIDeviceIDModernVsock) {
+		t.Errorf("PCIDeviceIDIsFS(0x%04x) = true, want false", PCIDeviceIDModernVsock)
+	}
 }
