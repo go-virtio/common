@@ -329,7 +329,7 @@ func (q *Virtqueue) PostAvail(descIdx uint16) error {
 	q.nextAvailIdx++
 	flags := binary.LittleEndian.Uint16(a[0:2])
 	headerWord := uint32(flags) | uint32(q.nextAvailIdx)<<16
-	atomic.StoreUint32((*uint32)(unsafe.Pointer(&a[0])), headerWord)
+	atomic.StoreUint32((*uint32)(unsafe.Pointer(&a[0])), hostWordToLE(headerWord))
 	return nil
 }
 
@@ -358,7 +358,7 @@ func (q *Virtqueue) AvailIdx() uint16 {
 // The load is an acquire on every Go-supported arch.
 func (q *Virtqueue) UsedIdx() uint16 {
 	u := q.usedSlice()
-	headerWord := atomic.LoadUint32((*uint32)(unsafe.Pointer(&u[0])))
+	headerWord := leWordToHost(atomic.LoadUint32((*uint32)(unsafe.Pointer(&u[0]))))
 	return uint16(headerWord >> 16)
 }
 
