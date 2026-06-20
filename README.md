@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/go-virtio/brand/main/social/go-virtio.png" alt="go-virtio/common" width="720"></p>
+
 # go-virtio/common
 
 Transport-agnostic infrastructure for the `go-virtio` family of pure-Go

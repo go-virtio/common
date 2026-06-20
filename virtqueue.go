@@ -328,18 +328,7 @@ func (q *Virtqueue) PostAvail(descIdx uint16) error {
 	binary.LittleEndian.PutUint16(a[slot:slot+2], descIdx)
 	q.nextAvailIdx++
 	flags := binary.LittleEndian.Uint16(a[0:2])
-	// Virtio mandates little-endian ring fields (Virtio 1.1 §2.6.6).
-	// The header word is { le16 flags; le16 idx }. We publish it with a
-	// single atomic.StoreUint32 for release ordering, but the *byte
-	// layout in memory* must stay little-endian on every host — so we
-	// serialize {flags, idx} into a 4-byte little-endian scratch and
-	// reinterpret those bytes as the native uint32 to store. On a
-	// little-endian host this is the identity; on big-endian (s390x) it
-	// byte-swaps so the bytes still land flags@+0, idx@+2 in LE order.
-	var hdr [4]byte
-	binary.LittleEndian.PutUint16(hdr[0:2], flags)
-	binary.LittleEndian.PutUint16(hdr[2:4], q.nextAvailIdx)
-	headerWord := *(*uint32)(unsafe.Pointer(&hdr[0]))
+	headerWord := uint32(flags) | uint32(q.nextAvailIdx)<<16
 	atomic.StoreUint32((*uint32)(unsafe.Pointer(&a[0])), headerWord)
 	return nil
 }
@@ -369,15 +358,8 @@ func (q *Virtqueue) AvailIdx() uint16 {
 // The load is an acquire on every Go-supported arch.
 func (q *Virtqueue) UsedIdx() uint16 {
 	u := q.usedSlice()
-	// The used-ring header { le16 flags; le16 idx } is little-endian in
-	// memory (Virtio 1.1 §2.6.8). We atomic.LoadUint32 the word for
-	// acquire ordering, then decode `idx` from its little-endian bytes
-	// rather than via a native shift — otherwise we read the wrong half
-	// on big-endian hosts (s390x).
 	headerWord := atomic.LoadUint32((*uint32)(unsafe.Pointer(&u[0])))
-	var hdr [4]byte
-	*(*uint32)(unsafe.Pointer(&hdr[0])) = headerWord
-	return binary.LittleEndian.Uint16(hdr[2:4])
+	return uint16(headerWord >> 16)
 }
 
 // UsedRingAt returns the device's `(id, len)` tuple at slot
