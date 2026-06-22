@@ -28,6 +28,35 @@ func TestEndianHelpersRoundTrip(t *testing.T) {
 	}
 }
 
+// TestEndianHelpersBothBranches forces both the big-endian and the
+// little-endian code paths regardless of the actual host arch, so
+// endian.go is fully covered everywhere (each CI arch only exercises its
+// own branch naturally, which would otherwise leave the other uncovered
+// and drop below the coverage floor).
+func TestEndianHelpersBothBranches(t *testing.T) {
+	saved := hostIsBigEndian
+	defer func() { hostIsBigEndian = saved }()
+
+	const w = uint32(0x1122_3344)
+	swapped := bits.ReverseBytes32(w)
+
+	hostIsBigEndian = true
+	if got := hostWordToLE(w); got != swapped {
+		t.Errorf("BE hostWordToLE(0x%08x): got 0x%08x want 0x%08x", w, got, swapped)
+	}
+	if got := leWordToHost(w); got != swapped {
+		t.Errorf("BE leWordToHost(0x%08x): got 0x%08x want 0x%08x", w, got, swapped)
+	}
+
+	hostIsBigEndian = false
+	if got := hostWordToLE(w); got != w {
+		t.Errorf("LE hostWordToLE(0x%08x): got 0x%08x want 0x%08x", w, got, w)
+	}
+	if got := leWordToHost(w); got != w {
+		t.Errorf("LE leWordToHost(0x%08x): got 0x%08x want 0x%08x", w, got, w)
+	}
+}
+
 // TestPostAvailWritesLittleEndianIdx asserts that PostAvail lays the
 // avail-ring `idx` field down as little-endian bytes at offset +2,
 // independent of host byte order. Before the endianness fix this stored
