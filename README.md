@@ -2,6 +2,10 @@
 
 # go-virtio/common
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/go-virtio/common.svg)](https://pkg.go.dev/github.com/go-virtio/common)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![CI](https://github.com/go-virtio/common/actions/workflows/ci.yml/badge.svg)](https://github.com/go-virtio/common/actions/workflows/ci.yml)
+
 Transport-agnostic infrastructure for the `go-virtio` family of pure-Go
 virtio drivers.
 
