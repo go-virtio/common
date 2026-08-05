@@ -39,7 +39,28 @@ their own spec-level driver on top.
   - [`github.com/go-virtio/net`](https://github.com/go-virtio/net) —
     pure-Go virtio-net (network device) driver.
   - [`github.com/go-virtio/blk`](https://github.com/go-virtio/blk) —
-    placeholder for a future pure-Go virtio-blk driver.
+    pure-Go virtio-blk (block device) driver.
+  - [`github.com/go-virtio/rng`](https://github.com/go-virtio/rng) —
+    pure-Go virtio-rng (entropy) driver.
+  - [`github.com/go-virtio/vsock`](https://github.com/go-virtio/vsock) —
+    pure-Go virtio-vsock driver.
+  - [`github.com/go-virtio/console`](https://github.com/go-virtio/console)
+    — pure-Go virtio-console driver.
+  - [`github.com/go-virtio/balloon`](https://github.com/go-virtio/balloon)
+    — pure-Go virtio-balloon driver.
+  - [`github.com/go-virtio/fs`](https://github.com/go-virtio/fs) —
+    pure-Go virtio-fs (FUSE-over-virtio) driver.
+  - [`github.com/go-virtio/input`](https://github.com/go-virtio/input) —
+    pure-Go virtio-input driver.
+  - [`github.com/go-virtio/sound`](https://github.com/go-virtio/sound) —
+    pure-Go virtio-sound driver.
+  - [`github.com/go-virtio/gpu`](https://github.com/go-virtio/gpu) —
+    pure-Go virtio-gpu driver (2D framebuffer + virgl 3D + software
+    rasterizer).
+  - [`github.com/go-virtio/venus`](https://github.com/go-virtio/venus) —
+    Vulkan-over-virtio (Venus) guest-side groundwork.
+  - [`github.com/go-virtio/validate`](https://github.com/go-virtio/validate)
+    — real-hardware validation harness.
 
 ## License
 
