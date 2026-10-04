@@ -32,15 +32,15 @@
 // References (cited at every layout/register decision in the package):
 //
 //   - Virtio 1.1 (committee specification 01, 2019-04-11):
-//       * §4.1.2.1 "PCI Device Discovery" — vendor/device IDs.
-//       * §4.1.4   "Virtio Structure PCI Capabilities" — cap layout.
-//       * §4.1.5   "PCI-specific Initialization And Device Operation"
-//                  — COMMON_CFG / NOTIFY_CFG / ISR_CFG / DEVICE_CFG /
-//                    PCI_CFG register layouts.
-//       * §2.6     "Virtqueues" — split-ring layout (this package
-//                  implements split-ring; packed-ring is not supported).
-//       * §3.1.1   "Driver Requirements: Device Initialization" — the
-//                  status-bit choreography device-class drivers follow.
+//   - §4.1.2.1 "PCI Device Discovery" — vendor/device IDs.
+//   - §4.1.4   "Virtio Structure PCI Capabilities" — cap layout.
+//   - §4.1.5   "PCI-specific Initialization And Device Operation"
+//     — COMMON_CFG / NOTIFY_CFG / ISR_CFG / DEVICE_CFG /
+//     PCI_CFG register layouts.
+//   - §2.6     "Virtqueues" — split-ring layout (this package
+//     implements split-ring; packed-ring is not supported).
+//   - §3.1.1   "Driver Requirements: Device Initialization" — the
+//     status-bit choreography device-class drivers follow.
 //   - Linux drivers/virtio/virtio_pci_modern.c — canonical
 //     Go-translatable reference for the COMMON_CFG handshake.
 //   - Linux drivers/virtio/virtio_ring.c — canonical reference for the

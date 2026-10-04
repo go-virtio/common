@@ -414,9 +414,9 @@ func TestModernConfig_SetDriverFeatures64(t *testing.T) {
 // the last DeviceFeatureSelect write — mirrors the real device's
 // behaviour.
 type featureBAR struct {
-	store    map[uint64]uint64
-	lo, hi   uint32
-	lastSel  uint32
+	store   map[uint64]uint64
+	lo, hi  uint32
+	lastSel uint32
 }
 
 func (m *featureBAR) Read8(bar uint8, off uint64) (uint8, error) {
