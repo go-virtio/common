@@ -71,13 +71,13 @@ const CommonCfgSize uint32 = 0x38
 // DeviceStatus bits (Virtio 1.1 §2.1). The init sequence drives
 // these through SetDeviceStatus:
 //
-//	1. Write 0 to DeviceStatus (full reset).
-//	2. Set ACKNOWLEDGE.
-//	3. Set DRIVER.
-//	4. Read DeviceFeature, mask down, write DriverFeature.
-//	5. Set FEATURES_OK, re-read DeviceStatus, confirm FEATURES_OK.
-//	6. Set up per-class queues.
-//	7. Set DRIVER_OK.
+//  1. Write 0 to DeviceStatus (full reset).
+//  2. Set ACKNOWLEDGE.
+//  3. Set DRIVER.
+//  4. Read DeviceFeature, mask down, write DriverFeature.
+//  5. Set FEATURES_OK, re-read DeviceStatus, confirm FEATURES_OK.
+//  6. Set up per-class queues.
+//  7. Set DRIVER_OK.
 //
 // Failure mode: FAILED bit set (firmware/device rejected our config).
 const (

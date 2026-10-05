@@ -13,14 +13,14 @@ import (
 // COMMON_CFG accessors.
 type errBAR struct{}
 
-func (errBAR) Read8(uint8, uint64) (uint8, error)         { return 0, errors.New("rw err") }
-func (errBAR) Read16(uint8, uint64) (uint16, error)       { return 0, errors.New("rw err") }
-func (errBAR) Read32(uint8, uint64) (uint32, error)       { return 0, errors.New("rw err") }
-func (errBAR) Read64(uint8, uint64) (uint64, error)       { return 0, errors.New("rw err") }
-func (errBAR) Write8(uint8, uint64, uint8) error          { return errors.New("rw err") }
-func (errBAR) Write16(uint8, uint64, uint16) error        { return errors.New("rw err") }
-func (errBAR) Write32(uint8, uint64, uint32) error        { return errors.New("rw err") }
-func (errBAR) Write64(uint8, uint64, uint64) error        { return errors.New("rw err") }
+func (errBAR) Read8(uint8, uint64) (uint8, error)   { return 0, errors.New("rw err") }
+func (errBAR) Read16(uint8, uint64) (uint16, error) { return 0, errors.New("rw err") }
+func (errBAR) Read32(uint8, uint64) (uint32, error) { return 0, errors.New("rw err") }
+func (errBAR) Read64(uint8, uint64) (uint64, error) { return 0, errors.New("rw err") }
+func (errBAR) Write8(uint8, uint64, uint8) error    { return errors.New("rw err") }
+func (errBAR) Write16(uint8, uint64, uint16) error  { return errors.New("rw err") }
+func (errBAR) Write32(uint8, uint64, uint32) error  { return errors.New("rw err") }
+func (errBAR) Write64(uint8, uint64, uint64) error  { return errors.New("rw err") }
 
 func TestReadDeviceFeatureSelect(t *testing.T) {
 	bar := newMemBAR()
